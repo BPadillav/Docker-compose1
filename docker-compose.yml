@@ -1,0 +1,39 @@
+version: '3.9'
+
+services:
+  
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "16686:16686"
+    environment:
+      COLLECTOR_ZIPKIN_HTTP_PORT: 9411
+
+  mongodb:
+    image: mongo
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    volumes:
+      - mongodb_data:/data/db
+
+  pelicula:
+    build: ./pelicula
+    ports:
+      - "8083:8083"
+    depends_on:
+      - mongodb
+      - jaeger
+    environment:
+      JAEGER_SERVICE_NAME: pelicula
+      JAEGER_SAMPLER_TYPE: const
+      JAEGER_SAMPLER_PARAM: 1
+      JAEGER_AGENT_HOST: jaeger
+      JAEGER_AGENT_PORT: 6831
+
+volumes:
+  mongodb_data:
